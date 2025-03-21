@@ -1,12 +1,29 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
+import 'package:order_wizard/utils/routes.dart';
+import 'package:order_wizard/utils/service_locator.dart';
+
+Future<void> initService() async {
+  await setupGetIt();
+}
+
+// Configure the router
+final router = GoRouter(
+  navigatorKey: navigatorKey,
+  initialLocation: '/',
+  routes: $appRoutes,
+);
 
 void main() {
+  initService();
   runApp(const MyApp());
 }
 
-final GoRouter router = getIt<GoRouter>();
+// final GoRouter router = GoRouter(
+//   initialLocation: '/',
+//   navigatorKey: ,
+//   routes: 
+// );
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -18,21 +35,6 @@ class MyApp extends StatelessWidget {
       routerConfig: router,
       title: 'Order Wizard',
       theme: const CupertinoThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         primaryColor: CupertinoColors.activeBlue,
         brightness: Brightness.light,
         barBackgroundColor: CupertinoColors.systemBackground,
