@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:order_wizard/controller/order_controller.dart';
 import 'package:order_wizard/models/order.dart';
 import 'package:order_wizard/utils/service_locator.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:desktop_drop/desktop_drop.dart';
 import 'dart:io';
 
 class AddOrderScreen extends StatelessWidget {
@@ -16,14 +16,38 @@ class AddOrderScreen extends StatelessWidget {
     final amountController = TextEditingController();
     final noteController = TextEditingController();
     final ValueNotifier<File?> selectedImage = ValueNotifier<File?>(null);
+    final ValueNotifier<bool> isDragging = ValueNotifier<bool>(false);
 
-    Future<void> pickImage() async {
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        selectedImage.value = File(image.path);
-      }
-    }
+    // Future<void> pickImage() async {
+    //   try {
+    //     final ImagePicker picker = ImagePicker();
+    //     final XFile? image = await picker.pickImage(
+    //       source: ImageSource.gallery,
+    //       imageQuality: 85,
+    //     );
+    //     if (image != null) {
+    //       selectedImage.value = File(image.path);
+    //       print('Image picked: ${image.path}');
+    //     } else {
+    //       print('No image selected');
+    //     }
+    //   } catch (e) {
+    //     print('Error picking image: $e');
+    //     showCupertinoDialog(
+    //       context: context,
+    //       builder: (context) => CupertinoAlertDialog(
+    //         title: const Text('Error'),
+    //         content: Text('Failed to pick image: $e'),
+    //         actions: [
+    //           CupertinoDialogAction(
+    //             child: const Text('OK'),
+    //             onPressed: () => Navigator.pop(context),
+    //           ),
+    //         ],
+    //       ),
+    //     );
+    //   }
+    // }
 
     return CupertinoPageScaffold(
       navigationBar: const CupertinoNavigationBar(
@@ -45,21 +69,72 @@ class AddOrderScreen extends StatelessWidget {
                     builder: (context, image, _) {
                       return Column(
                         children: [
-                          Container(
-                            height: 200,
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              border: Border.all(color: CupertinoColors.systemGrey),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: image != null
-                              ? Image.file(image, fit: BoxFit.cover)
-                              : const Center(child: Text('No Image')),
-                          ),
-                          const SizedBox(height: 8),
-                          CupertinoButton(
-                            onPressed: pickImage,
-                            child: Text(image == null ? 'Upload Image' : 'Change Image'),
+                          ValueListenableBuilder<bool>(
+                            valueListenable: isDragging,
+                            builder: (context, dragging, _) {
+                              return DropTarget(
+                                onDragDone: (details) {
+                                  if (details.files.isNotEmpty) {
+                                    selectedImage.value = File(details.files.first.path);
+                                  }
+                                },
+                                onDragEntered: (details) => isDragging.value = true,
+                                onDragExited: (details) => isDragging.value = false,
+                                child: Container(
+                                  height: 200,
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: dragging ? CupertinoColors.activeBlue : CupertinoColors.systemGrey,
+                                      width: 2,
+                                      style: BorderStyle.solid,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: dragging ? CupertinoColors.activeBlue.withOpacity(0.1) : null,
+                                  ),
+                                  child: image != null
+                                    ? Stack(
+                                        fit: StackFit.expand,
+                                        children: [
+                                          Image.file(image, fit: BoxFit.cover),
+                                          Center(
+                                            child: Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: CupertinoColors.black.withOpacity(0.5),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: const Text(
+                                                'Drop new image here\nto replace',
+                                                style: TextStyle(color: CupertinoColors.white),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(
+                                            CupertinoIcons.photo,
+                                            size: 48,
+                                            color: CupertinoColors.systemGrey,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            dragging ? 'Release to upload' : 'Drop image here',
+                                            style: const TextStyle(
+                                              color: CupertinoColors.systemGrey,
+                                              fontSize: 16,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ],
+                                      ),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       );
