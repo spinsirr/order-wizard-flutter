@@ -4,7 +4,7 @@ import 'package:order_wizard/utils/routes.dart';
 import 'package:order_wizard/utils/service_locator.dart';
 
 Future<void> initService() async {
-  await setupGetIt();
+  setupServiceLocator();
 }
 
 // Configure the router

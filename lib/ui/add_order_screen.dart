@@ -17,37 +17,9 @@ class AddOrderScreen extends StatelessWidget {
     final noteController = TextEditingController();
     final ValueNotifier<File?> selectedImage = ValueNotifier<File?>(null);
     final ValueNotifier<bool> isDragging = ValueNotifier<bool>(false);
+    final ValueNotifier<bool> commentWithPicture = ValueNotifier<bool>(false);
 
-    // Future<void> pickImage() async {
-    //   try {
-    //     final ImagePicker picker = ImagePicker();
-    //     final XFile? image = await picker.pickImage(
-    //       source: ImageSource.gallery,
-    //       imageQuality: 85,
-    //     );
-    //     if (image != null) {
-    //       selectedImage.value = File(image.path);
-    //       print('Image picked: ${image.path}');
-    //     } else {
-    //       print('No image selected');
-    //     }
-    //   } catch (e) {
-    //     print('Error picking image: $e');
-    //     showCupertinoDialog(
-    //       context: context,
-    //       builder: (context) => CupertinoAlertDialog(
-    //         title: const Text('Error'),
-    //         content: Text('Failed to pick image: $e'),
-    //         actions: [
-    //           CupertinoDialogAction(
-    //             child: const Text('OK'),
-    //             onPressed: () => Navigator.pop(context),
-    //           ),
-    //         ],
-    //       ),
-    //     );
-    //   }
-    // }
+
 
     return CupertinoPageScaffold(
       navigationBar: const CupertinoNavigationBar(
@@ -136,6 +108,35 @@ class AddOrderScreen extends StatelessWidget {
                               );
                             },
                           ),
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: CupertinoColors.systemGrey),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: ValueListenableBuilder<bool>(
+                              valueListenable: commentWithPicture,
+                              builder: (context, value, _) => Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'Comment with Picture',
+                                    style: TextStyle(
+                                      color: CupertinoColors.label,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  CupertinoSwitch(
+                                    value: value,
+                                    onChanged: (newValue) {
+                                      commentWithPicture.value = newValue;
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       );
                     },
@@ -189,17 +190,50 @@ class AddOrderScreen extends StatelessWidget {
 
                       CupertinoButton.filled(
                         onPressed: () {
-                          if (formKey.currentState?.validate() ?? false) {
-                            final amount = double.tryParse(amountController.text) ?? 0.0;
-                            final order = Order(
-                              orderNumber: orderNumberController.text,
-                              amount: amount,
-                              imageUri: selectedImage.value?.path,
-                              note: noteController.text,
+                          if (orderNumberController.text.isEmpty) {
+                            showCupertinoDialog(
+                              context: context,
+                              builder: (context) => CupertinoAlertDialog(
+                                title: const Text('Invalid Input'),
+                                content: const Text('Please enter an order number.'),
+                                actions: [
+                                  CupertinoDialogAction(
+                                    child: const Text('OK'),
+                                    onPressed: () => Navigator.pop(context),
+                                  ),
+                                ],
+                              ),
                             );
-                            orderController.addOrder(order);
-                            Navigator.of(context).pop();
+                            return;
                           }
+
+                          final amount = double.tryParse(amountController.text);
+                          if (amount == null || amount <= 0) {
+                            showCupertinoDialog(
+                              context: context,
+                              builder: (context) => CupertinoAlertDialog(
+                                title: const Text('Invalid Input'),
+                                content: const Text('Please enter a valid amount greater than 0.'),
+                                actions: [
+                                  CupertinoDialogAction(
+                                    child: const Text('OK'),
+                                    onPressed: () => Navigator.pop(context),
+                                  ),
+                                ],
+                              ),
+                            );
+                            return;
+                          }
+
+                          final order = Order(
+                            orderNumber: orderNumberController.text,
+                            amount: amount,
+                            imageUri: selectedImage.value?.path,
+                            note: noteController.text,
+                            commentWithPicture: commentWithPicture.value,
+                          );
+                          orderController.addOrder(order);
+                          Navigator.of(context).pop();
                         },
                         child: const Text('Add Order'),
                       ),
